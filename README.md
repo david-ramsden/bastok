@@ -1,5 +1,7 @@
 # bastok
 
+[![CI](https://github.com/david-ramsden/bastok/actions/workflows/ci.yml/badge.svg)](https://github.com/david-ramsden/bastok/actions/workflows/ci.yml)
+
 A tokenizer and detokenizer for RISC OS BBC BASIC V (`.ffb`, filetype `&FFB`) files.
 
 The core correctness criterion is the round-trip property:
