@@ -185,7 +185,7 @@ In the RISC OS source, this is `MODE`: 0 = left/statement-start, 1 = right/expre
 - `transfer_left` (action bit 2): THEN, ELSE, OTHERWISE, ERROR, LET → MODE=left
 - **neither**: REPEAT, END, ENDPROC, RETURN, STOP, RUN, CLG, CLS, CLEAR, DATA, DEF, REM etc. → MODE unchanged
 
-`bastok.py` uses a simplified boolean `stmt_start` that sets True for a broad set of keywords (including REPEAT, FOR, PRINT, DIM etc.) rather than the correct three-state. In practice this is harmless — no corpus or TalkerD file has PTR/PAGE/TIME/LOMEM/HIMEM in a context where the difference matters — but future work could implement the three-state model correctly if needed.
+`bastok.py` uses a simplified boolean `stmt_start` that sets True for a broad set of keywords (including REPEAT, FOR, PRINT, DIM etc.) rather than the correct three-state. In practice this is harmless — no corpus file has PTR/PAGE/TIME/LOMEM/HIMEM in a context where the difference matters — but future work could implement the three-state model correctly if needed.
 
 ### Abbreviation support
 A keyword can be abbreviated by typing its unique prefix followed by `.` (e.g. `PR.` = PRINT). The minimum abbreviation length for each keyword is given in `parse.c`. **Not implemented in `bastok.py`** — full keyword names required.
@@ -205,28 +205,17 @@ Only add files tokenized by the **RISC OS standard tokenizer**. Before adding an
   - Very compact code with single-letter variable names, no spaces (even without an identifying REM)
   - A compressed `!RunImage,ffb` alongside an uncompressed `!RunImageU,ffb` — the `U` file is the canonical source, the non-`U` file is the crunched output; **exclude the crunched file**
 
-- `zap_SpeedMove.ffb` was removed — it was tokenized by Zap's own tokenizer which has different backward boundary rules.
+## Known limitations
 
-### TalkerD test set
+These are inherent ambiguities from files compiled by tokenizers with slightly different rules. The corpus (100% pass) takes priority.
 
-`find ../talkerd-docker/TalkerD -iname '*,ffb' ! -path '../talkerd-docker/TalkerD/!TalkerD/*'` — 200 files total; exclude:
-- `!JFShared/` — very old files with complex tokenizer edge cases (ignored for now)
-- Any crunched file where a `U`-suffix uncompressed counterpart exists
-- The StrongED `!StrongED/` subtree contains 29 files compiled by StrongBS (identifiable by compact style or `REM Squashed by StrongBS` header) — these fail and are non-standard
+1. Keywords with no forward boundary check (e.g. `ON`, `READ`, `TO`) can tokenize inside all-caps identifiers — e.g. `FIONREAD`, `AF_INETOR`. Inherent with no-general-backward-boundary approach.
 
-After exclusions: 147/176 non-JFShared files pass.
+2. Some older compilers tokenized `THEN` inside `DATA` statement content. `bastok.py` treats DATA as literal (correct for all corpus files).
 
-## Known limitations / TalkerD failures
+3. `PROC_ERROR`: underscore check prevents `ERROR`, but `OR` (no WORDCQ) then tokenizes inside the remaining `RROR` suffix.
 
-1. **SocketLib** — `FIONREAD`/`FIONBIO`: ON and READ tokenize inside all-caps C constant names. `AF_INETOR`: TO (no WORDCQ) tokenizes inside a word. Inherent with no-general-backward-boundary approach.
-
-2. **TestLib** (×2) — original compiler tokenized `THEN` inside DATA statement content. Our tokenizer treats DATA as literal (correct for all corpus files).
-
-3. **FTPc** — `PROC_ERROR`: underscore check prevents ERROR, but OR (no WORDCQ) then tokenizes inside the remaining `RROR` suffix.
-
-4. **29 StrongED files** — compiled by StrongBS, which tokenizes `RETURN`, `FALSE`, and `ENDPROC` without WORDCQ. Non-standard; excluded from testing.
-
-Items 1–3 are inherent ambiguities from files compiled by tokenizers with slightly different rules. The corpus (100% pass) takes priority.
+4. **Crunched/compressed files** (e.g. StrongBS) tokenize `RETURN`, `FALSE`, and `ENDPROC` without WORDCQ — non-standard; excluded from testing.
 
 ## Implementation files
 
