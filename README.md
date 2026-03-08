@@ -44,6 +44,34 @@ BBC BASIC V files use a compact binary format:
 
 See [CLAUDE.md](CLAUDE.md) for a full format reference including the complete token table, dual-context token rules, inline line number encoding, and tokenizer design notes.
 
+## VS Code workflow
+
+A convenient way to work with BBC BASIC sources is to edit detokenized `.bas` files in VS Code and automatically retokenize them on save using the [Run on Save](https://marketplace.visualstudio.com/items?itemName=emeraldwalk.RunOnSave) extension (`emeraldwalk.runonsave`).
+
+**1. Detokenize once to create the editable source:**
+
+```bash
+python3 bastok.py --strip-line-numbers detokenize MyProgram,ffb MyProgram.bas
+```
+
+**2. Configure Run on Save** in `.vscode/settings.json` to retokenize whenever the `.bas` file is saved:
+
+```json
+{
+  "emeraldwalk.runonsave": {
+    "isEnabled": true,
+    "commands": [
+      {
+        "match": "\\.bas$",
+        "cmd": "python3 ${workspaceFolder}/bastok.py tokenize \"${file}\" \"${fileDirname}/${fileBasenameNoExt},ffb\""
+      }
+    ]
+  }
+}
+```
+
+Each time you save `MyProgram.bas`, the tokenized `MyProgram,ffb` is updated alongside it, ready to transfer to RISC OS.
+
 ## Tests
 
 ```bash
