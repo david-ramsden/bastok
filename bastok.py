@@ -9,31 +9,6 @@ Usage:
   --strip-line-numbers  Omit line numbers from detokenized output.
   --auto-number=N       Auto-number unnumbered lines with step N (default 10).
                         Numbered lines in the source reset the counter.
-
-Format (BBC BASIC V, ARM/RISC OS):
-  Each line:  0x0D  line_hi  line_lo  length  <tokens>
-  End of file: 0x0D  0xFF
-  length counts: 0x0D + line_hi + line_lo + length byte + payload (i.e. payload = length - 4)
-
-  Inline line numbers after GOTO/GOSUB/RESTORE/THEN/ELSE/ON:
-    0x8D b0 b1 b2
-    encode: b0 = (((N&0xC0)>>2) | ((N&0xC000)>>12)) ^ 0x54
-            b1 = (N & 0x3F) | 0x40        -- low 6 bits of lo byte
-            b2 = ((N & 0x3F00) >> 8) | 0x40  -- low 6 bits of hi byte
-    decode: x  = b0 ^ 0x54
-            lo = ((x&0x30)<<2) | (b1&0x3F)
-            hi = ((x&0x0C)<<4) | (b2&0x3F)
-            N  = (hi<<8) | lo
-
-  Two-byte extended tokens (all three prefixes index into one shared keyword table):
-    0xC6 nn  ESCFN tokens  (nn >= 0x8E): SUM, BEAT
-    0xC7 nn  ESCCOM tokens (nn >= 0x8E): APPEND, AUTO, CRUNCH, DELETE, EDIT, HELP, ...
-    0xC8 nn  ESCSTMT tokens(nn >= 0x8E): CASE, CIRCLE, FILL, WHILE, SYS, LIBRARY, ...
-
-Token table cross-referenced against:
-  - gerph/riscos-basic-detokenise (Justin Fletcher, 1997)
-  - steve-fryatt/tokenize (Stephen Fryatt, 2014)
-  - xania.org/200711/bbc-basic-v-format (Matt Godbolt, 2007)
 """
 
 import sys
